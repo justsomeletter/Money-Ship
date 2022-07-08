@@ -1,10 +1,6 @@
 "use strict";
 
 /////////////////////////////////////////////////
-/////////////////////////////////////////////////
-// BANKIST APP
-
-/////////////////////////////////////////////////
 // Data
 const account1 = {
   owner: "Arjun Suresh",
@@ -145,9 +141,35 @@ const updateUI = function (acc) {
   calcDisplaySummary(acc);
 };
 
+const startLogoutTimer = function () {
+  const tick = function () {
+    const min = String(Math.trunc(time / 60)).padStart(2, 0);
+    const sec = String(time % 60).padStart(2, 0);
+
+    // In each call print the remaining time into the UI
+    labelTimer.textContent = `${min}:${sec}`;
+
+    //when it reaches 0 seconds, stop the timer and logout the user.
+    if (time == 0) {
+      clearInterval(timer);
+      labelWelcome.textContent = "Log in to get started";
+      containerApp.style.opacity = 0;
+    }
+    //decrease timer by 1 sec
+    time--;
+  };
+  //start of time 2 minutes
+  let time = 120;
+
+  //call the timer every second
+  tick();
+  const timer = setInterval(tick, 1000);
+  return timer;
+};
+
 ///////////////////////////////////////
 // Event handlers
-let currentAccount;
+let currentAccount, timer;
 
 btnLogin.addEventListener("click", function (e) {
   // Prevent form from auto-submitting
@@ -169,6 +191,10 @@ btnLogin.addEventListener("click", function (e) {
     inputLoginUsername.value = inputLoginPin.value = "";
     //inputLoginPin.blur();
 
+    // delete any timer if present so as alternating timer bug doens't persist
+    if (timer) clearInterval(timer);
+
+    timer = startLogoutTimer();
     // Update UI
     updateUI(currentAccount);
   }
@@ -198,6 +224,10 @@ btnTransfer.addEventListener("click", function (e) {
 
     // Update UI
     updateUI(currentAccount);
+
+    // Reset Timer
+    clearInterval(timer);
+    timer = startLogoutTimer();
   }
 });
 
@@ -211,11 +241,17 @@ btnLoan.addEventListener("click", function (e) {
     amount > 0 &&
     currentAccount.movements.some((mov) => mov >= amount * 0.1) // some methods return true if the condn is satisified by any element in the array.
   ) {
-    // Add movement coz loan was approved
-    currentAccount.movements.push(amount);
+    setTimeout(function () {
+      // Add movement coz loan was approved
+      currentAccount.movements.push(amount);
 
-    // Update UI
-    updateUI(currentAccount);
+      // Update UI
+      updateUI(currentAccount);
+
+      // Reset Timer
+      clearInterval(timer);
+      timer = startLogoutTimer();
+    }, 2500);
   }
   inputLoanAmount.value = "";
 });
@@ -325,4 +361,6 @@ const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
       5. loan will only be approaved if the user has no pre-existing loan. 
       6. create a Master bank account for all loan related activity.
       7. what will happen if we tranfer money when the balance is insufficient.
+      8. after logging out the user we can display a message saying session timed out and stuff.
+      9. Display something on successfull transections
  */
